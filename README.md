@@ -9,8 +9,6 @@ A small, free Windows app. No install, no ads, no account.
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![yt-dlp](https://img.shields.io/badge/powered%20by-yt--dlp-FF0000?logo=youtube&logoColor=white)
 
-[**⬇️ Download the app**](https://github.com/Ender909v1/YouTube-Downloader/releases/latest)
-
 <img src="docs/screenshot.png" alt="YouTube Downloader app window" width="640">
 
 </div>
