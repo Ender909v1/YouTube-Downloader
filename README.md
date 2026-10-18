@@ -23,7 +23,7 @@ A small, free Windows app. No install, no ads, no account.
 |---|---|
 | 🔗 **Link tab** | Paste one video link and get a single MP4 or MP3 file. |
 | 📃 **Playlist tab** | Paste a playlist link, or several video links (one per line). Save each file, or everything at once as a **.zip**. |
-| 🎵 **MP3** | 192 kbps audio with title metadata. |
+| 🎵 **MP3** | Best-quality VBR audio (~245 kbps) with title metadata, no clipping. |
 | 🎞️ **MP4** | H.264 video + AAC audio, up to 1080p. Plays in the built-in Windows player. |
 | 🔢 **Ordered** | Playlist files are numbered in playlist order: `001 - Title.mp3`, `002 - Title.mp3`, … |
 | 📦 **All-in-one** | One `.exe` with FFmpeg built in. Nothing else to install. |

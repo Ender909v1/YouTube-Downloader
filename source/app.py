@@ -62,9 +62,13 @@ def ydl_options(fmt: str, out_dir: Path, playlist: bool, hook) -> dict:
     if fmt == "mp3":
         opts["format"] = "bestaudio/best"
         opts["postprocessors"] = [
-            {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"},
+            # "0" = LAME VBR V0 (~245 kbps), the best MP3 quality setting.
+            {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "0"},
             {"key": "FFmpegMetadata"},
         ]
+        # Loud YouTube uploads peak above 0 dBFS; without headroom the MP3 clips
+        # and crackles on loud parts. 1.5 dB is inaudible as a volume change.
+        opts["postprocessor_args"] = {"extractaudio": ["-af", "volume=-1.5dB"]}
     else:
         # Prefer H.264 + AAC: YouTube's best MP4 video is often AV1, which the default
         # Windows player cannot decode (plays sound with no picture).
