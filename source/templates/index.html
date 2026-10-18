@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YouTube Downloader</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #fff; --text: #1b1d22; --muted: #6b7180; --border: #e2e4ea;
+    --accent: #e5322d; --accent-text: #fff; --soft: #f0f1f4; --ok: #1f8a4c; --err: #c62828;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121317; --card: #1c1e24; --text: #eceef3; --muted: #9aa0ad; --border: #2c2f38;
+      --accent: #ff4d47; --accent-text: #fff; --soft: #252831; --ok: #4cc27f; --err: #ff6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 24px; margin: 0 0 20px; display: flex; align-items: center; gap: 10px; }
+  h1 .logo { width: 32px; height: 22px; background: var(--accent); border-radius: 6px; position: relative; }
+  h1 .logo::after { content: ""; position: absolute; left: 13px; top: 6px;
+                    border-left: 8px solid #fff; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+
+  .tabs { display: flex; gap: 4px; background: var(--soft); padding: 4px; border-radius: 10px; margin-bottom: 16px; }
+  .tabs button { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 10px;
+                 border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
+  .tabs button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+
+  input, textarea { width: 100%; font: inherit; color: var(--text); background: var(--bg);
+                    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  textarea { min-height: 96px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  .row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .formats { display: flex; background: var(--soft); border-radius: 8px; padding: 3px; }
+  .formats label { cursor: pointer; }
+  .formats input { display: none; }
+  .formats span { display: block; padding: 8px 18px; border-radius: 6px; font-weight: 600; color: var(--muted); }
+  .formats input:checked + span { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .go { flex: 1; min-width: 140px; border: 0; background: var(--accent); color: var(--accent-text);
+        font: inherit; font-weight: 700; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+  .go:disabled { opacity: .55; cursor: wait; }
+
+  .empty { color: var(--muted); }
+  .bar { height: 8px; background: var(--soft); border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
+  .bar div { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+  .status-line { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+  .error { color: var(--err); overflow-wrap: anywhere; }
+  .files { list-style: none; padding: 0; margin: 12px 0 0; }
+  .files li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .files li:first-child { border-top: 0; }
+  .files .name { flex: 1; overflow-wrap: anywhere; }
+  .btn { display: inline-block; text-decoration: none; font-weight: 600; font-size: 14px; white-space: nowrap;
+         padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--text); background: var(--soft); }
+  .btn.primary { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .warn { font-size: 13px; color: var(--muted); margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1><span class="logo"></span>YouTube Downloader</h1>
+
+  <div class="tabs" role="tablist">
+    <button class="active" data-tab="link" role="tab">Link</button>
+    <button data-tab="playlist" role="tab">Playlist</button>
+  </div>
+
+  <section class="panel active" id="panel-link">
+    <div class="card">
+      <h2>1 · Video link</h2>
+      <input class="url" type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
+      <div class="row">
+        <div class="formats">
+          <label><input type="radio" name="fmt-link" value="mp4" checked><span>MP4</span></label>
+          <label><input type="radio" name="fmt-link" value="mp3"><span>MP3</span></label>
+        </div>
+        <button class="go">Generate</button>
+      </div>
+    </div>
+    <div class="card"><h2>2 · Download</h2><div class="result"><p class="empty">Your file will appear here.</p></div></div>
+  </section>
+
+  <section class="panel" id="panel-playlist">
+    <div class="card">
+      <h2>1 · Playlist link</h2>
+      <textarea class="url" placeholder="https://www.youtube.com/playlist?list=...&#10;or several video links, one per line"></textarea>
+      <p class="hint">Paste a playlist / mix URL, or a list of video links (one per line).</p>
+      <div class="row">
+        <div class="formats">
+          <label><input type="radio" name="fmt-playlist" value="mp4" checked><span>MP4</span></label>
+          <label><input type="radio" name="fmt-playlist" value="mp3"><span>MP3</span></label>
+        </div>
+        <button class="go">Generate</button>
+      </div>
+    </div>
+    <div class="card"><h2>2 · Download</h2><div class="result"><p class="empty">Your files will appear here.</p></div></div>
+  </section>
+</main>
+
+<script>
+document.querySelectorAll(".tabs button").forEach(btn => btn.addEventListener("click", () => {
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b === btn));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + btn.dataset.tab));
+}));
+
+// Desktop app: the native window cannot follow download links, so ask Python to show a Save dialog.
+document.addEventListener("click", async e => {
+  const link = e.target.closest("a.btn");
+  if (!link || !window.pywebview) return;
+  e.preventDefault();
+  const path = link.getAttribute("href");
+  const filename = link.dataset.name;
+  const label = link.textContent;
+  link.textContent = "Saving…";
+  try {
+    const saved = await window.pywebview.api.save(path, filename);
+    link.textContent = saved ? "Saved ✓" : label;
+  } catch (err) {
+    link.textContent = label;
+    alert("Could not save: " + err);
+  }
+});
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+for (const mode of ["link", "playlist"]) {
+  const panel = document.getElementById("panel-" + mode);
+  const go = panel.querySelector(".go");
+  const urlField = panel.querySelector(".url");
+  const result = panel.querySelector(".result");
+
+  urlField.addEventListener("keydown", e => {
+    if (e.key === "Enter" && (mode === "link" || e.ctrlKey)) { e.preventDefault(); go.click(); }
+  });
+
+  go.addEventListener("click", async () => {
+    const format = panel.querySelector(`input[name="fmt-${mode}"]:checked`).value;
+    go.disabled = true; go.textContent = "Working…";
+    result.innerHTML = `<div class="bar"><div></div></div><div class="status-line">Starting…</div>`;
+    try {
+      const res = await fetch("/api/start", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({url: urlField.value, format, mode}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+      await poll(data.job_id, result, mode);
+    } catch (e) {
+      result.innerHTML = `<p class="error">${esc(e.message)}</p>`;
+    } finally {
+      go.disabled = false; go.textContent = "Generate";
+    }
+  });
+}
+
+async function poll(jobId, result, mode) {
+  while (true) {
+    const res = await fetch("/api/status/" + jobId);
+    if (!res.ok) throw new Error("Job lost. Try again.");
+    const job = await res.json();
+    if (job.status === "error") throw new Error(job.error);
+    if (job.status === "done") return renderFiles(jobId, job, result, mode);
+
+    const bar = result.querySelector(".bar div");
+    const line = result.querySelector(".status-line");
+    let pct = job.percent || 0;
+    if (job.total > 1 && job.index) pct = ((job.index - 1) + pct / 100) / job.total * 100;
+    bar.style.width = pct + "%";
+    const count = job.total > 1 && job.index ? `[${job.index}/${job.total}] ` : "";
+    const phase = job.phase === "converting" ? "Converting" : job.phase === "downloading" ? "Downloading" : "Fetching info";
+    line.textContent = `${count}${phase}${job.title ? ": " + job.title : "…"} ${job.phase === "downloading" ? Math.round(job.percent) + "%" : ""}`;
+    await new Promise(r => setTimeout(r, 800));
+  }
+}
+
+function renderFiles(jobId, job, result, mode) {
+  const items = job.files.map(f =>
+    `<li><span class="name">${esc(f)}</span>
+     <a class="btn" href="/api/file/${jobId}/${encodeURIComponent(f)}" data-name="${esc(f)}">Download</a></li>`).join("");
+  const zip = mode === "playlist"
+    ? `<a class="btn primary" href="/api/zip/${jobId}" data-name="playlist-${job.format}.zip">Download all (.zip, ${job.files.length} file${job.files.length === 1 ? "" : "s"})</a>` : "";
+  const single = mode === "link"
+    ? `<a class="btn primary" href="/api/file/${jobId}/${encodeURIComponent(job.files[0])}" data-name="${esc(job.files[0])}">Download ${job.format.toUpperCase()}</a>` : "";
+  const warn = job.warnings && job.warnings.length ? `<p class="warn">${job.warnings.length} link(s) failed and were skipped.</p>` : "";
+  result.innerHTML = `${single}${zip}<ul class="files">${mode === "link" ? `<li><span class="name">${esc(job.files[0])}</span></li>` : items}</ul>${warn}`;
+}
+</script>
+</body>
+</html>

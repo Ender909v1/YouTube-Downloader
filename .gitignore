@@ -1,0 +1,17 @@
+# Built app (published as a GitHub Release instead)
+*.exe
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# PyInstaller work files
+source/build/
+*.spec
+
+# Downloaded media
+source/downloads/
+
+# Local tool settings
+.claude/
