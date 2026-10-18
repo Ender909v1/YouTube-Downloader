@@ -17,6 +17,7 @@ import imageio_ffmpeg
 import yt_dlp
 from flask import Flask, abort, jsonify, render_template, request, send_from_directory
 
+APP_VERSION = "1.1"  # bump together with the GitHub release tag (v1.1)
 FROZEN = getattr(sys, "frozen", False)  # running as a PyInstaller .exe
 BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 # The .exe cannot write next to itself reliably, so it keeps work files in %TEMP%.
@@ -39,6 +40,7 @@ class QuietLogger:
     def error(self, msg): pass
 jobs: dict[str, dict] = {}
 jobs_lock = threading.Lock()
+cancel_events: dict[str, threading.Event] = {}  # set by /api/cancel, read by the job thread
 
 
 def update(job_id: str, **fields) -> None:
@@ -46,7 +48,7 @@ def update(job_id: str, **fields) -> None:
         jobs[job_id].update(fields)
 
 
-def ydl_options(fmt: str, out_dir: Path, playlist: bool, hook) -> dict:
+def ydl_options(fmt: str, out_dir: Path, playlist: bool, hook, pp_hook=None) -> dict:
     name = "%(playlist_index)03d - %(title)s.%(ext)s" if playlist else "%(title)s.%(ext)s"
     opts = {
         "outtmpl": str(out_dir / name),
@@ -58,6 +60,7 @@ def ydl_options(fmt: str, out_dir: Path, playlist: bool, hook) -> dict:
         "noprogress": True,
         "logger": QuietLogger(),
         "progress_hooks": [hook],
+        "postprocessor_hooks": [pp_hook] if pp_hook else [],
     }
     if fmt == "mp3":
         opts["format"] = "bestaudio/best"
@@ -84,7 +87,15 @@ def run_job(job_id: str, urls: list[str], fmt: str, playlist_mode: bool) -> None
     # A single playlist URL is expanded by yt-dlp; a pasted list of links is looped here.
     use_playlist = playlist_mode and len(urls) == 1
 
+    cancel = cancel_events[job_id]
+
+    def check_cancel(_=None):
+        # Raising inside a yt-dlp hook stops the download at the next chunk.
+        if cancel.is_set():
+            raise yt_dlp.utils.DownloadCancelled("Cancelled")
+
     def hook(d):
+        check_cancel()
         info = d.get("info_dict") or {}
         fields = {"title": info.get("title") or ""}
         if use_playlist and info.get("playlist_index"):
@@ -101,15 +112,16 @@ def run_job(job_id: str, urls: list[str], fmt: str, playlist_mode: bool) -> None
 
     try:
         if use_playlist:
-            with yt_dlp.YoutubeDL(ydl_options(fmt, out_dir, True, hook)) as ydl:
+            with yt_dlp.YoutubeDL(ydl_options(fmt, out_dir, True, hook, check_cancel)) as ydl:
                 ydl.download(urls)
         else:
             update(job_id, total=len(urls))
             failed = []
             for i, url in enumerate(urls, 1):
+                check_cancel()
                 update(job_id, index=i, percent=0)
                 try:
-                    with yt_dlp.YoutubeDL(ydl_options(fmt, out_dir, False, hook)) as ydl:
+                    with yt_dlp.YoutubeDL(ydl_options(fmt, out_dir, False, hook, check_cancel)) as ydl:
                         ydl.download([url])
                 except yt_dlp.utils.DownloadError as e:
                     if len(urls) == 1:
@@ -121,12 +133,19 @@ def run_job(job_id: str, urls: list[str], fmt: str, playlist_mode: bool) -> None
         files = sorted(p.name for p in out_dir.iterdir() if p.suffix.lower() == f".{fmt}")
         if not files:
             raise RuntimeError("Nothing was downloaded. Check the link.")
+        check_cancel()
         update(job_id, status="done", files=files, phase="done", percent=100)
     except Exception as e:  # report any failure to the UI
-        msg = re.sub(r"\x1b\[[0-9;]*m", "", str(e)).replace("ERROR: ", "")
-        update(job_id, status="error", error=msg)
+        if cancel.is_set():
+            update(job_id, status="cancelled")
+        else:
+            msg = re.sub(r"\x1b\[[0-9;]*m", "", str(e)).replace("ERROR: ", "")
+            update(job_id, status="error", error=msg)
     finally:
         update(job_id, finished_at=time.time())
+        cancel_events.pop(job_id, None)
+        if cancel.is_set():
+            shutil.rmtree(out_dir, ignore_errors=True)
 
 
 def cleanup_old_jobs() -> None:
@@ -141,7 +160,7 @@ def cleanup_old_jobs() -> None:
 
 @app.get("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", version=APP_VERSION)
 
 
 @app.post("/api/start")
@@ -169,8 +188,19 @@ def start():
     with jobs_lock:
         jobs[job_id] = {"status": "running", "phase": "starting", "percent": 0,
                         "index": 0, "total": 0, "title": "", "files": [], "format": fmt}
+    cancel_events[job_id] = threading.Event()
     threading.Thread(target=run_job, args=(job_id, urls, fmt, mode == "playlist"), daemon=True).start()
     return jsonify(job_id=job_id)
+
+
+@app.post("/api/cancel/<job_id>")
+def cancel(job_id):
+    event = cancel_events.get(job_id)
+    if not event:  # unknown job, or it already finished
+        abort(404)
+    event.set()
+    update(job_id, phase="cancelling")
+    return jsonify(ok=True)
 
 
 @app.get("/api/status/<job_id>")

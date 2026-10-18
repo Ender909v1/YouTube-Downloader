@@ -12,7 +12,7 @@ from urllib.parse import unquote
 
 import webview
 
-from app import app
+from app import APP_VERSION, app
 
 window = None
 
@@ -56,7 +56,7 @@ def main() -> None:
         except OSError:
             time.sleep(0.05)
     window = webview.create_window(
-        "YouTube Downloader", base_url, js_api=Api(base_url),
+        f"YouTube Downloader v{APP_VERSION}", base_url, js_api=Api(base_url),
         width=820, height=780, min_size=(420, 560),
     )
     webview.start()

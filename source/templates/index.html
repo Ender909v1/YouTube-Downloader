@@ -24,6 +24,8 @@
   h1 .logo::after { content: ""; position: absolute; left: 13px; top: 6px;
                     border-left: 8px solid #fff; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
 
+  h1 .version { font-size: 13px; font-weight: 600; color: var(--muted); background: var(--soft);
+                padding: 2px 8px; border-radius: 99px; }
   .tabs { display: flex; gap: 4px; background: var(--soft); padding: 4px; border-radius: 10px; margin-bottom: 16px; }
   .tabs button { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 10px;
                  border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
@@ -54,6 +56,11 @@
   .bar { height: 8px; background: var(--soft); border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
   .bar div { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
   .status-line { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+  .progress-row { display: flex; align-items: center; gap: 12px; }
+  .progress-row .status-line { flex: 1; }
+  .btn.cancel { font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn.cancel:hover:not(:disabled) { border-color: var(--err); color: var(--err); }
+  .btn.cancel:disabled { opacity: .6; cursor: wait; }
   .error { color: var(--err); overflow-wrap: anywhere; }
   .files { list-style: none; padding: 0; margin: 12px 0 0; }
   .files li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
@@ -67,7 +74,7 @@
 </head>
 <body>
 <main>
-  <h1><span class="logo"></span>YouTube Downloader</h1>
+  <h1><span class="logo"></span>YouTube Downloader <span class="version">v{{ version }}</span></h1>
 
   <div class="tabs" role="tablist">
     <button class="active" data-tab="link" role="tab">Link</button>
@@ -145,7 +152,9 @@ for (const mode of ["link", "playlist"]) {
   go.addEventListener("click", async () => {
     const format = panel.querySelector(`input[name="fmt-${mode}"]:checked`).value;
     go.disabled = true; go.textContent = "Working…";
-    result.innerHTML = `<div class="bar"><div></div></div><div class="status-line">Starting…</div>`;
+    result.innerHTML = `<div class="bar"><div></div></div>
+      <div class="progress-row"><div class="status-line">Starting…</div>
+      <button class="btn cancel" hidden>Cancel</button></div>`;
     try {
       const res = await fetch("/api/start", {
         method: "POST", headers: {"Content-Type": "application/json"},
@@ -163,12 +172,23 @@ for (const mode of ["link", "playlist"]) {
 }
 
 async function poll(jobId, result, mode) {
+  const cancelBtn = result.querySelector(".cancel");
+  cancelBtn.hidden = false;
+  cancelBtn.addEventListener("click", async () => {
+    cancelBtn.disabled = true; cancelBtn.textContent = "Cancelling…";
+    await fetch("/api/cancel/" + jobId, {method: "POST"}).catch(() => {});
+  });
+
   while (true) {
     const res = await fetch("/api/status/" + jobId);
     if (!res.ok) throw new Error("Job lost. Try again.");
     const job = await res.json();
     if (job.status === "error") throw new Error(job.error);
     if (job.status === "done") return renderFiles(jobId, job, result, mode);
+    if (job.status === "cancelled") {
+      result.innerHTML = `<p class="empty">Download cancelled.</p>`;
+      return;
+    }
 
     const bar = result.querySelector(".bar div");
     const line = result.querySelector(".status-line");
@@ -176,6 +196,7 @@ async function poll(jobId, result, mode) {
     if (job.total > 1 && job.index) pct = ((job.index - 1) + pct / 100) / job.total * 100;
     bar.style.width = pct + "%";
     const count = job.total > 1 && job.index ? `[${job.index}/${job.total}] ` : "";
+    if (job.phase === "cancelling") { line.textContent = "Cancelling…"; await new Promise(r => setTimeout(r, 500)); continue; }
     const phase = job.phase === "converting" ? "Converting" : job.phase === "downloading" ? "Downloading" : "Fetching info";
     line.textContent = `${count}${phase}${job.title ? ": " + job.title : "…"} ${job.phase === "downloading" ? Math.round(job.percent) + "%" : ""}`;
     await new Promise(r => setTimeout(r, 800));
