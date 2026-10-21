@@ -13,5 +13,9 @@ source/build/
 # Downloaded media
 source/downloads/
 
+# Local sign-in settings and exported cookies (never commit these)
+source/settings.json
+*cookies*.txt
+
 # Local tool settings
 .claude/

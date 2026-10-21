@@ -11,7 +11,7 @@ A small, free Windows app. No install, no ads, no account.
 
 [**⬇️ Download the app**](https://github.com/Ender909v1/YouTube-Downloader/releases/latest)
 
-<img src="docs/screenshot.png" alt="YouTube Downloader app window" width="640">
+<img src="docs/screenshot.png" alt="YouTube Downloader app window with the side menu" width="760">
 
 </div>
 
@@ -21,8 +21,11 @@ A small, free Windows app. No install, no ads, no account.
 
 | | |
 |---|---|
-| 🔗 **Link tab** | Paste one video link and get a single MP4 or MP3 file. |
-| 📃 **Playlist tab** | Paste a playlist link, or several video links (one per line). Save each file, or everything at once as a **.zip**. |
+| 🔗 **Link** | Paste one video link and get a single MP4 or MP3 file. |
+| 📃 **Playlist** | Paste a playlist link, or several video links (one per line). Save each file, or everything at once as a **.zip**. |
+| 🔞 **Age-restricted videos** | **Sign in** page: sign in to YouTube inside the app, or use your Firefox/Chrome/Edge/Brave sign-in. **Cookies** page: use an exported `cookies.txt`. |
+| ⏹️ **Cancel** | Stop a running download or playlist at any time. |
+| 📚 **Side menu** | Collapse it to icons or expand it. On narrow windows it slides over the page. |
 | 🎵 **MP3** | Best-quality VBR audio (~245 kbps) with title metadata, no clipping. |
 | 🎞️ **MP4** | H.264 video + AAC audio, up to 1080p. Plays in the built-in Windows player. |
 | 🔢 **Ordered** | Playlist files are numbered in playlist order: `001 - Title.mp3`, `002 - Title.mp3`, … |
@@ -33,8 +36,21 @@ A small, free Windows app. No install, no ads, no account.
 
 1. Download **`YouTube Downloader.exe`** from the [latest release](https://github.com/Ender909v1/YouTube-Downloader/releases/latest).
 2. Double-click it. The app opens in its own window (first start takes a few seconds).
-3. Pick a tab, paste a link, choose **MP4** or **MP3**, and press **Generate**.
+3. Pick **Link** or **Playlist** in the menu, paste a link, choose **MP4** or **MP3**, and press **Generate**.
 4. When it finishes, click **Download** and choose where to save.
+
+### 🔞 Age-restricted videos
+
+YouTube only serves these to a signed-in, age-verified account. Pick one way:
+
+| Way | How | Notes |
+|---|---|---|
+| **Sign in in this app** | **Sign in** page → **Sign in to YouTube** → accept → sign in on Google's page. | Easiest. You sign in once. Google may sometimes refuse sign-in in app windows. |
+| **Browser sign-in** | **Sign in** page → pick your browser. | Works best with Firefox. Newer Chrome/Edge/Brave lock their sign-in, so this often fails. |
+| **cookies.txt** | Export cookies for youtube.com with the *Get cookies.txt LOCALLY* extension, then **Cookies** page → choose the file → **Use this file**. | Works with any browser. Export a new file when it expires. |
+
+> [!WARNING]
+> Your saved sign-in and any `cookies.txt` file give access to your YouTube account. They stay on your PC and are only sent to YouTube. Never share them. Click **Sign out** on the **Sign in** page to delete the app's saved sign-in.
 
 > [!NOTE]
 > The app is not code-signed, so Windows may show **"Windows protected your PC"** the first time.
@@ -66,8 +82,8 @@ Run it without building:
 ```
 YouTube-Downloader/
 ├── source/
-│   ├── app.py              # Flask server: runs yt-dlp in the background, reports progress
-│   ├── desktop.py          # Native window (pywebview) + Save dialog
+│   ├── app.py              # Flask server: runs yt-dlp in the background, reports progress, sign-in settings
+│   ├── desktop.py          # Native window (pywebview), Save dialog, in-app YouTube sign-in
 │   ├── templates/
 │   │   └── index.html      # The UI
 │   ├── build.bat           # Builds the single-file .exe with PyInstaller
@@ -100,6 +116,13 @@ Files made by older versions may use the AV1 codec. Download them again with the
 <summary><b>Some videos in a playlist are missing</b></summary>
 
 Private, deleted, or age-restricted videos are skipped so the rest of the playlist can still finish.
+Sign in (see [Age-restricted videos](#-age-restricted-videos)) to include age-restricted ones.
+</details>
+
+<details>
+<summary><b>"Sign in to confirm your age" or "Chrome protects its sign-in"</b></summary>
+
+The video is age-restricted. Use **Sign in in this app**, Firefox, or a `cookies.txt` file. Chrome, Edge and Brave lock their sign-in, so the app usually cannot read it directly.
 </details>
 
 ## 🙏 Built with

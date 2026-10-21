@@ -8,41 +8,110 @@
   :root {
     --bg: #f4f5f7; --card: #fff; --text: #1b1d22; --muted: #6b7180; --border: #e2e4ea;
     --accent: #e5322d; --accent-text: #fff; --soft: #f0f1f4; --ok: #1f8a4c; --err: #c62828;
+    --side: #fff; --side-w: 220px; --side-w-collapsed: 64px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #121317; --card: #1c1e24; --text: #eceef3; --muted: #9aa0ad; --border: #2c2f38;
       --accent: #ff4d47; --accent-text: #fff; --soft: #252831; --ok: #4cc27f; --err: #ff6b6b;
+      --side: #17181d;
     }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }  /* class display rules must not un-hide elements */
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
-  h1 { font-size: 24px; margin: 0 0 20px; display: flex; align-items: center; gap: 10px; }
-  h1 .logo { width: 32px; height: 22px; background: var(--accent); border-radius: 6px; position: relative; }
-  h1 .logo::after { content: ""; position: absolute; left: 13px; top: 6px;
-                    border-left: 8px solid #fff; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+  a { color: var(--accent); }
+  svg.icon { width: 20px; height: 20px; flex: 0 0 20px; fill: none; stroke: currentColor;
+             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .logo { width: 30px; height: 21px; flex: 0 0 30px; background: var(--accent); border-radius: 6px; position: relative; }
+  .logo::after { content: ""; position: absolute; left: 12px; top: 6px;
+                 border-left: 8px solid #fff; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+  .version { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--soft);
+             padding: 1px 8px; border-radius: 99px; }
 
-  h1 .version { font-size: 13px; font-weight: 600; color: var(--muted); background: var(--soft);
-                padding: 2px 8px; border-radius: 99px; }
-  .tabs { display: flex; gap: 4px; background: var(--soft); padding: 4px; border-radius: 10px; margin-bottom: 16px; }
-  .tabs button { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 10px;
-                 border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
-  .tabs button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  /* ---------- Layout: left menu + page ---------- */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: var(--side-w); flex: 0 0 var(--side-w); background: var(--side); border-right: 1px solid var(--border);
+             display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+             transition: width .18s ease, flex-basis .18s ease; overflow: hidden; z-index: 20; }
+  .side-head { display: flex; align-items: center; gap: 10px; padding: 14px 12px; min-height: 60px; }
+  .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+              flex: 0 0 40px; border: 0; border-radius: 8px; background: transparent; color: var(--text); cursor: pointer; }
+  .icon-btn:hover { background: var(--soft); }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; white-space: nowrap; min-width: 0; }
+  .nav { display: flex; flex-direction: column; gap: 2px; padding: 4px 12px; }
+  .nav-sep { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+             padding: 14px 10px 4px; white-space: nowrap; }
+  .nav button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px; border: 0; border-radius: 8px;
+                background: transparent; color: var(--muted); font: inherit; font-weight: 600; text-align: left;
+                cursor: pointer; white-space: nowrap; }
+  .nav button:hover { background: var(--soft); color: var(--text); }
+  .nav button.active { background: var(--soft); color: var(--text); }
+  .nav button.active svg { color: var(--accent); }
+  .side-foot { margin-top: auto; padding: 12px; }
+  .auth-chip { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 1px solid var(--border);
+               border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 13px;
+               cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
+  .auth-chip .dot { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: var(--muted); margin: 0 5px; }
+  .auth-chip.on { color: var(--text); }
+  .auth-chip.on .dot { background: var(--ok); }
+  .auth-chip .text { overflow: hidden; text-overflow: ellipsis; }
+  .side-version { font-size: 12px; color: var(--muted); padding: 8px 10px 0; white-space: nowrap; }
 
-  .panel { display: none; }
-  .panel.active { display: block; }
+  /* Collapsed: icons only */
+  .app.collapsed .sidebar { width: var(--side-w-collapsed); flex-basis: var(--side-w-collapsed); }
+  .app.collapsed .label, .app.collapsed .brand, .app.collapsed .nav-sep, .app.collapsed .auth-chip .text { display: none; }
+  .app.collapsed .nav-sep { display: block; height: 14px; padding: 0; font-size: 0; }
+  .app.collapsed .nav button { justify-content: center; padding: 10px 0; }
+  .app.collapsed .auth-chip { justify-content: center; padding: 10px 0; }
+
+  .content { flex: 1; min-width: 0; }
+  .topbar { display: none; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border);
+            background: var(--side); position: sticky; top: 0; z-index: 10; }
+  .page-wrap { max-width: 720px; margin: 0 auto; padding: 28px 24px 64px; }
+  .scrim { display: none; }
+
+  /* Phones / narrow windows: the menu slides over the page */
+  @media (max-width: 720px) {
+    .topbar { display: flex; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; flex-basis: 260px;
+               transform: translateX(-100%); transition: transform .2s ease; box-shadow: 0 0 24px rgba(0,0,0,.25); }
+    .app.collapsed .sidebar { width: 260px; flex-basis: 260px; }
+    .app.collapsed .label, .app.collapsed .brand, .app.collapsed .auth-chip .text { display: revert; }
+    .app.collapsed .nav-sep { display: block; height: auto; padding: 14px 10px 4px; font-size: 11px; }
+    .app.collapsed .nav button, .app.collapsed .auth-chip { justify-content: flex-start; padding: 10px; }
+    .app.menu-open .sidebar { transform: none; }
+    .app.menu-open .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 15; }
+    .side-head .icon-btn.collapse { display: none; }
+    .page-wrap { padding: 20px 16px 48px; }
+  }
+
+  /* ---------- Pages ---------- */
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 22px; margin: 0 0 4px; }
+  .page-sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px;
+             display: flex; align-items: center; gap: 8px; }
+  .card h3 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .hint:empty { display: none; }
+  .hint.err { color: var(--err); }
+  .hint.good { color: var(--ok); }
+  .badge { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px;
+           border-radius: 99px; background: var(--ok); color: #fff; }
+  .badge[hidden] { display: none; }
+  ol.steps { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+  ol.steps li { margin: 4px 0; }
 
   input, textarea { width: 100%; font: inherit; color: var(--text); background: var(--bg);
                     border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
   textarea { min-height: 96px; resize: vertical; }
   input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
-  .row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
   .formats { display: flex; background: var(--soft); border-radius: 8px; padding: 3px; }
   .formats label { cursor: pointer; }
   .formats input { display: none; }
@@ -50,7 +119,19 @@
   .formats input:checked + span { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
   .go { flex: 1; min-width: 140px; border: 0; background: var(--accent); color: var(--accent-text);
         font: inherit; font-weight: 700; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+  .go.fit { flex: 0 0 auto; }
   .go:disabled { opacity: .55; cursor: wait; }
+
+  .btn { display: inline-block; text-decoration: none; font: inherit; font-weight: 600; font-size: 14px; white-space: nowrap;
+         padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--text); background: var(--soft);
+         cursor: pointer; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn.primary { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .btn.danger:hover:not(:disabled) { border-color: var(--err); color: var(--err); }
+  .btn.selected { border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); }
+
+  .browsers { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
+  .browsers .btn { text-align: center; padding: 10px; }
 
   .empty { color: var(--muted); }
   .bar { height: 8px; background: var(--soft); border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
@@ -58,78 +139,247 @@
   .status-line { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
   .progress-row { display: flex; align-items: center; gap: 12px; }
   .progress-row .status-line { flex: 1; }
-  .btn.cancel { font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .btn.cancel:hover:not(:disabled) { border-color: var(--err); color: var(--err); }
-  .btn.cancel:disabled { opacity: .6; cursor: wait; }
-  .error { color: var(--err); overflow-wrap: anywhere; }
+  .error { color: var(--err); overflow-wrap: anywhere; margin: 0; }
   .files { list-style: none; padding: 0; margin: 12px 0 0; }
   .files li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
   .files li:first-child { border-top: 0; }
   .files .name { flex: 1; overflow-wrap: anywhere; }
-  .btn { display: inline-block; text-decoration: none; font-weight: 600; font-size: 14px; white-space: nowrap;
-         padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--text); background: var(--soft); }
-  .btn.primary { background: var(--ok); border-color: var(--ok); color: #fff; }
   .warn { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+  dialog#consent { max-width: 520px; width: calc(100% - 32px); border: 1px solid var(--border); border-radius: 12px;
+                   background: var(--card); color: var(--text); padding: 20px 24px; }
+  dialog#consent::backdrop { background: rgba(0,0,0,.55); }
+  dialog#consent h3 { margin: 0 0 8px; }
+  dialog#consent ul { padding-left: 20px; margin: 8px 0 4px; }
+  dialog#consent li { margin: 6px 0; font-size: 14px; }
+  dialog#consent code { font-size: 12px; overflow-wrap: anywhere; color: var(--muted); }
+  dialog#consent .row { justify-content: flex-end; }
 </style>
 </head>
 <body>
-<main>
-  <h1><span class="logo"></span>YouTube Downloader <span class="version">v{{ version }}</span></h1>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-collapse" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 10l-2 2 2 2"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></symbol>
+  <symbol id="i-playlist" viewBox="0 0 24 24"><path d="M3 6h14M3 12h9M3 18h9"/><path d="M16 13v7l5-3.5z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-cookie" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 4 4 0 0 1-4-4 4 4 0 0 1-5-5z"/><path d="M8.5 11.5h.01M12 16h.01M15.5 13h.01M9 7.5h.01"/></symbol>
+</svg>
 
-  <div class="tabs" role="tablist">
-    <button class="active" data-tab="link" role="tab">Link</button>
-    <button data-tab="playlist" role="tab">Playlist</button>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar" aria-label="Menu">
+    <div class="side-head">
+      <button class="icon-btn collapse" id="collapse-btn" type="button" title="Collapse or expand the menu"
+              aria-label="Collapse or expand the menu"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <div class="brand"><span class="logo"></span><span>YT Downloader</span></div>
+    </div>
+    <nav class="nav">
+      <button data-page="link" title="Link"><svg class="icon"><use href="#i-link"/></svg><span class="label">Link</span></button>
+      <button data-page="playlist" title="Playlist"><svg class="icon"><use href="#i-playlist"/></svg><span class="label">Playlist</span></button>
+      <div class="nav-sep">Account</div>
+      <button data-page="signin" title="Sign in"><svg class="icon"><use href="#i-user"/></svg><span class="label">Sign in</span></button>
+      <button data-page="cookies" title="Cookies"><svg class="icon"><use href="#i-cookie"/></svg><span class="label">Cookies</span></button>
+    </nav>
+    <div class="side-foot">
+      <button class="auth-chip" id="auth-chip" type="button" data-goto="signin" title="Not signed in">
+        <span class="dot"></span><span class="text">Not signed in</span></button>
+      <div class="side-version label">Version {{ version }}</div>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="content">
+    <header class="topbar">
+      <button class="icon-btn" id="menu-btn" type="button" aria-label="Open menu"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <span class="logo"></span><b>YouTube Downloader</b><span class="version">v{{ version }}</span>
+    </header>
+
+    <div class="page-wrap">
+      <!-- ===== Link ===== -->
+      <section class="page" id="page-link">
+        <h1 class="page-title">Download a video</h1>
+        <p class="page-sub">Paste one YouTube link and pick MP4 (video) or MP3 (audio).</p>
+        <div class="card">
+          <h2>1 · Video link</h2>
+          <input class="url" type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
+          <div class="row">
+            <div class="formats">
+              <label><input type="radio" name="fmt-link" value="mp4" checked><span>MP4</span></label>
+              <label><input type="radio" name="fmt-link" value="mp3"><span>MP3</span></label>
+            </div>
+            <button class="go">Generate</button>
+          </div>
+        </div>
+        <div class="card"><h2>2 · Download</h2><div class="result"><p class="empty">Your file will appear here.</p></div></div>
+      </section>
+
+      <!-- ===== Playlist ===== -->
+      <section class="page" id="page-playlist">
+        <h1 class="page-title">Download a playlist</h1>
+        <p class="page-sub">Paste a playlist / mix link, or several video links (one per line).</p>
+        <div class="card">
+          <h2>1 · Playlist link</h2>
+          <textarea class="url" placeholder="https://www.youtube.com/playlist?list=...&#10;or several video links, one per line"></textarea>
+          <div class="row">
+            <div class="formats">
+              <label><input type="radio" name="fmt-playlist" value="mp4" checked><span>MP4</span></label>
+              <label><input type="radio" name="fmt-playlist" value="mp3"><span>MP3</span></label>
+            </div>
+            <button class="go">Generate</button>
+          </div>
+        </div>
+        <div class="card"><h2>2 · Download</h2><div class="result"><p class="empty">Your files will appear here.</p></div></div>
+      </section>
+
+      <!-- ===== Sign in ===== -->
+      <section class="page" id="page-signin">
+        <h1 class="page-title">Sign in</h1>
+        <p class="page-sub">Needed only for age-restricted videos. Your YouTube account must be age-verified.
+          Your sign-in stays on this PC and is only sent to YouTube.</p>
+
+        <div class="card">
+          <h2>Downloads use</h2>
+          <div class="row" style="margin-top:0">
+            <b id="active-source" style="flex:1">Not signed in</b>
+            <button class="btn danger" id="turn-off" type="button">Turn off</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Sign in in this app <span class="badge" id="badge-app" hidden>In use</span></h3>
+          <p class="hint" style="margin-top:0">Opens Google's sign-in page in a window. You only need to do this once.</p>
+          <div class="row" id="app-desktop-only">
+            <button class="go fit" id="app-signin-btn" type="button">Sign in to YouTube</button>
+            <span id="app-signed-in" class="hint good" hidden style="margin:0;font-weight:600">Signed in ✓</span>
+            <button class="btn" id="app-use-btn" type="button" hidden>Use this sign-in</button>
+            <button class="btn danger" id="app-signout-btn" type="button" hidden>Sign out</button>
+          </div>
+          <p class="hint" id="app-browser-note" hidden>Available in the desktop app (YouTube Downloader.exe).</p>
+          <p class="hint" id="app-status"></p>
+        </div>
+
+        <div class="card">
+          <h3>Use your browser's sign-in <span class="badge" id="badge-browser" hidden>In use</span></h3>
+          <p class="hint" style="margin-top:0">Sign in to YouTube in one of these browsers, then pick it here.
+            Works best with Firefox. Chrome, Edge and Brave often lock their sign-in. If they fail,
+            use the <a href="#cookies" data-goto="cookies">Cookies</a> page instead.</p>
+          <div class="browsers">
+            <button class="btn" data-browser="firefox" type="button">Firefox</button>
+            <button class="btn" data-browser="chrome" type="button">Chrome</button>
+            <button class="btn" data-browser="edge" type="button">Edge</button>
+            <button class="btn" data-browser="brave" type="button">Brave</button>
+          </div>
+          <p class="hint" id="browser-status"></p>
+        </div>
+      </section>
+
+      <!-- ===== Cookies ===== -->
+      <section class="page" id="page-cookies">
+        <h1 class="page-title">Cookies</h1>
+        <p class="page-sub">Use a cookies.txt file exported from any browser where you are signed in to YouTube.</p>
+
+        <div class="card">
+          <h3>cookies.txt file <span class="badge" id="badge-file" hidden>In use</span></h3>
+          <div class="row">
+            <input id="cookie-file" type="text" placeholder="Path to cookies.txt" autocomplete="off" style="flex:1;min-width:200px">
+            <button class="btn" id="cookie-browse" type="button" hidden>Choose…</button>
+          </div>
+          <div class="row">
+            <button class="go fit" id="cookie-use" type="button">Use this file</button>
+          </div>
+          <p class="hint" id="cookie-status"></p>
+        </div>
+
+        <div class="card">
+          <h2>How to get cookies.txt</h2>
+          <ol class="steps">
+            <li>In your browser, install the extension <b>"Get cookies.txt LOCALLY"</b>.</li>
+            <li>Open youtube.com and make sure you are signed in.</li>
+            <li>Click the extension, then <b>Export</b>. It saves a .txt file.</li>
+            <li>Choose that file above and click <b>Use this file</b>.</li>
+          </ol>
+          <p class="hint">Keep this file private. Anyone who has it can use your YouTube account. Export a new one
+            when downloads start asking for sign-in again.</p>
+        </div>
+      </section>
+    </div>
   </div>
+</div>
 
-  <section class="panel active" id="panel-link">
-    <div class="card">
-      <h2>1 · Video link</h2>
-      <input class="url" type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
-      <div class="row">
-        <div class="formats">
-          <label><input type="radio" name="fmt-link" value="mp4" checked><span>MP4</span></label>
-          <label><input type="radio" name="fmt-link" value="mp3"><span>MP3</span></label>
-        </div>
-        <button class="go">Generate</button>
-      </div>
-    </div>
-    <div class="card"><h2>2 · Download</h2><div class="result"><p class="empty">Your file will appear here.</p></div></div>
-  </section>
-
-  <section class="panel" id="panel-playlist">
-    <div class="card">
-      <h2>1 · Playlist link</h2>
-      <textarea class="url" placeholder="https://www.youtube.com/playlist?list=...&#10;or several video links, one per line"></textarea>
-      <p class="hint">Paste a playlist / mix URL, or a list of video links (one per line).</p>
-      <div class="row">
-        <div class="formats">
-          <label><input type="radio" name="fmt-playlist" value="mp4" checked><span>MP4</span></label>
-          <label><input type="radio" name="fmt-playlist" value="mp3"><span>MP3</span></label>
-        </div>
-        <button class="go">Generate</button>
-      </div>
-    </div>
-    <div class="card"><h2>2 · Download</h2><div class="result"><p class="empty">Your files will appear here.</p></div></div>
-  </section>
-</main>
+<dialog id="consent">
+  <h3>Sign in to YouTube?</h3>
+  <p>To download age-restricted videos, this app needs to use your YouTube sign-in.</p>
+  <ul>
+    <li>Google's own sign-in page opens in a new window. You type your password into Google.
+      <b>This app never sees your password.</b></li>
+    <li>After you sign in, the app saves your YouTube sign-in cookies in a file on this PC only:
+      <code>{{ cookie_path }}</code></li>
+    <li>The app uses them only to download videos from YouTube. They are never sent anywhere else.</li>
+    <li>Anyone who gets that file can use your YouTube account. Do not share it.</li>
+    <li>You can click <b>Sign out</b> at any time to delete it.</li>
+  </ul>
+  <div class="row">
+    <button class="btn" id="consent-decline" type="button">Decline</button>
+    <button class="go fit" id="consent-accept" type="button">Accept and sign in</button>
+  </div>
+</dialog>
 
 <script>
-document.querySelectorAll(".tabs button").forEach(btn => btn.addEventListener("click", () => {
-  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b === btn));
-  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + btn.dataset.tab));
-}));
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = {  // per-viewer UI memory; the page works without it
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
 
-// Desktop app: the native window cannot follow download links, so ask Python to show a Save dialog.
+// ---------- Menu: pages, collapse, phone drawer ----------
+const app = $("app");
+const PAGES = ["link", "playlist", "signin", "cookies"];
+
+function showPage(name) {
+  if (!PAGES.includes(name)) name = "link";
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + name));
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.page === name));
+  if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
+  app.classList.remove("menu-open");
+}
+
+document.querySelectorAll(".nav button").forEach(b => b.addEventListener("click", () => showPage(b.dataset.page)));
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-goto]");
+  if (go) { e.preventDefault(); showPage(go.dataset.goto); }
+});
+window.addEventListener("hashchange", () => showPage(location.hash.slice(1)));
+
+$("collapse-btn").addEventListener("click", () => {
+  app.classList.toggle("collapsed");
+  store.set("menuCollapsed", app.classList.contains("collapsed") ? "1" : "0");
+});
+$("menu-btn").addEventListener("click", () => app.classList.add("menu-open"));
+$("scrim").addEventListener("click", () => app.classList.remove("menu-open"));
+document.addEventListener("keydown", e => { if (e.key === "Escape") app.classList.remove("menu-open"); });
+
+if (store.get("menuCollapsed") === "1") app.classList.add("collapsed");
+showPage(location.hash.slice(1));
+
+// ---------- Desktop window: Save dialog for download links ----------
+let isDesktop = false;
+function onDesktopReady() {
+  if (isDesktop) return;
+  isDesktop = true;
+  renderAuth();
+}
+window.addEventListener("pywebviewready", onDesktopReady);
+if (window.pywebview && window.pywebview.api) onDesktopReady();
+
 document.addEventListener("click", async e => {
   const link = e.target.closest("a.btn");
   if (!link || !window.pywebview) return;
   e.preventDefault();
-  const path = link.getAttribute("href");
-  const filename = link.dataset.name;
   const label = link.textContent;
   link.textContent = "Saving…";
   try {
-    const saved = await window.pywebview.api.save(path, filename);
+    const saved = await window.pywebview.api.save(link.getAttribute("href"), link.dataset.name);
     link.textContent = saved ? "Saved ✓" : label;
   } catch (err) {
     link.textContent = label;
@@ -137,10 +387,131 @@ document.addEventListener("click", async e => {
   }
 });
 
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// ---------- Sign-in state (one active source, saved on the server) ----------
+const BROWSERS = {firefox: "Firefox", chrome: "Chrome", edge: "Edge", brave: "Brave"};
+let auth = {cookie_source: "none", cookie_file: "", app_signed_in: false};
 
+function sourceLabel(a) {
+  if (a.cookie_source === "app") return "Signed in in this app";
+  if (a.cookie_source === "file") return "cookies.txt file";
+  if (BROWSERS[a.cookie_source]) return BROWSERS[a.cookie_source] + " sign-in";
+  return "Not signed in";
+}
+
+function renderAuth() {
+  const src = auth.cookie_source;
+  const on = src !== "none";
+  // Menu chip
+  const chip = $("auth-chip");
+  chip.classList.toggle("on", on);
+  chip.querySelector(".text").textContent = on ? "Using: " + sourceLabel(auth) : "Not signed in";
+  chip.title = chip.querySelector(".text").textContent;
+  // Sign in page
+  $("active-source").textContent = sourceLabel(auth);
+  $("turn-off").disabled = !on;
+  $("badge-app").hidden = src !== "app";
+  $("badge-browser").hidden = !BROWSERS[src];
+  $("badge-file").hidden = src !== "file";
+  $("app-desktop-only").hidden = !isDesktop;
+  $("app-browser-note").hidden = isDesktop;
+  $("app-signin-btn").hidden = auth.app_signed_in;
+  $("app-signed-in").hidden = !auth.app_signed_in;
+  $("app-signout-btn").hidden = !auth.app_signed_in;
+  $("app-use-btn").hidden = !auth.app_signed_in || src === "app";
+  document.querySelectorAll("[data-browser]").forEach(b => b.classList.toggle("selected", b.dataset.browser === src));
+  // Cookies page
+  if (document.activeElement !== $("cookie-file")) $("cookie-file").value = auth.cookie_file;
+  $("cookie-browse").hidden = !isDesktop;
+}
+
+function setStatus(id, text, kind) {
+  $(id).textContent = text || "";
+  $(id).className = "hint" + (kind ? " " + kind : "");
+}
+
+async function saveSource(cookie_source, cookie_file = auth.cookie_file) {
+  const res = await fetch("/api/settings", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({cookie_source, cookie_file}),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Could not save");
+  auth = {...auth, ...data};
+  renderAuth();
+}
+
+async function reloadAuth() {
+  try { auth = await (await fetch("/api/settings")).json(); } catch {}
+  renderAuth();
+}
+
+$("turn-off").addEventListener("click", async () => {
+  try { await saveSource("none"); setStatus("app-status", ""); setStatus("browser-status", "Sign-in turned off."); }
+  catch (e) { setStatus("browser-status", e.message, "err"); }
+});
+
+// Browser sign-in
+document.querySelectorAll("[data-browser]").forEach(b => b.addEventListener("click", async () => {
+  try {
+    await saveSource(b.dataset.browser);
+    setStatus("browser-status", `Downloads now use your ${BROWSERS[b.dataset.browser]} sign-in. ` +
+      "Make sure you are signed in to YouTube there.", "good");
+  } catch (e) { setStatus("browser-status", e.message, "err"); }
+}));
+
+// In-app sign-in: consent first, then Google's page in its own window
+const consent = $("consent");
+$("app-signin-btn").addEventListener("click", () => consent.showModal());
+$("consent-decline").addEventListener("click", () => {
+  consent.close();
+  setStatus("app-status", "Sign-in cancelled. Nothing was saved.");
+});
+$("consent-accept").addEventListener("click", async () => {
+  consent.close();
+  const btn = $("app-signin-btn");
+  btn.disabled = true;
+  setStatus("app-status", "Sign in to Google in the new window. It closes by itself when you are done.");
+  try {
+    const r = await window.pywebview.api.sign_in();
+    if (!r.ok) throw new Error(r.error);
+    await reloadAuth();
+    setStatus("app-status", "Signed in. Age-restricted videos will now download as you.", "good");
+  } catch (e) {
+    setStatus("app-status", String(e.message || e), "err");
+  } finally {
+    btn.disabled = false;
+  }
+});
+$("app-use-btn").addEventListener("click", async () => {
+  try { await saveSource("app"); setStatus("app-status", "Downloads now use your sign-in from this app.", "good"); }
+  catch (e) { setStatus("app-status", e.message, "err"); }
+});
+$("app-signout-btn").addEventListener("click", async () => {
+  const res = await fetch("/api/signout", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
+  auth = await res.json();
+  renderAuth();
+  setStatus("app-status", "Signed out. Your saved sign-in was deleted from this PC.");
+});
+
+// cookies.txt
+$("cookie-browse").addEventListener("click", async () => {
+  const path = await window.pywebview.api.pick_cookie_file();
+  if (path) $("cookie-file").value = path;
+});
+$("cookie-use").addEventListener("click", async () => {
+  const path = $("cookie-file").value.trim();
+  if (!path) return setStatus("cookie-status", "Choose your cookies.txt file first.", "err");
+  try {
+    await saveSource("file", path);
+    setStatus("cookie-status", "Downloads now use this cookies.txt file.", "good");
+  } catch (e) { setStatus("cookie-status", e.message, "err"); }
+});
+
+reloadAuth();
+
+// ---------- Downloads ----------
 for (const mode of ["link", "playlist"]) {
-  const panel = document.getElementById("panel-" + mode);
+  const panel = $("page-" + mode);
   const go = panel.querySelector(".go");
   const urlField = panel.querySelector(".url");
   const result = panel.querySelector(".result");
@@ -154,7 +525,7 @@ for (const mode of ["link", "playlist"]) {
     go.disabled = true; go.textContent = "Working…";
     result.innerHTML = `<div class="bar"><div></div></div>
       <div class="progress-row"><div class="status-line">Starting…</div>
-      <button class="btn cancel" hidden>Cancel</button></div>`;
+      <button class="btn danger cancel" hidden>Cancel</button></div>`;
     try {
       const res = await fetch("/api/start", {
         method: "POST", headers: {"Content-Type": "application/json"},
@@ -164,7 +535,10 @@ for (const mode of ["link", "playlist"]) {
       if (!res.ok) throw new Error(data.error || "Request failed");
       await poll(data.job_id, result, mode);
     } catch (e) {
-      result.innerHTML = `<p class="error">${esc(e.message)}</p>`;
+      const needsSignin = /sign-in|signed in|sign in|cookies\.txt/i.test(e.message);
+      result.innerHTML = `<p class="error">${esc(e.message)}</p>` +
+        (needsSignin ? `<div class="row"><button class="btn" data-goto="signin" type="button">Open Sign in</button>
+                        <button class="btn" data-goto="cookies" type="button">Open Cookies</button></div>` : "");
     } finally {
       go.disabled = false; go.textContent = "Generate";
     }
@@ -212,7 +586,8 @@ function renderFiles(jobId, job, result, mode) {
   const single = mode === "link"
     ? `<a class="btn primary" href="/api/file/${jobId}/${encodeURIComponent(job.files[0])}" data-name="${esc(job.files[0])}">Download ${job.format.toUpperCase()}</a>` : "";
   const warn = job.warnings && job.warnings.length ? `<p class="warn">${job.warnings.length} link(s) failed and were skipped.</p>` : "";
-  result.innerHTML = `${single}${zip}<ul class="files">${mode === "link" ? `<li><span class="name">${esc(job.files[0])}</span></li>` : items}</ul>${warn}`;
+  const notes = (job.notes || []).map(n => `<p class="warn">${esc(n)} <a href="#signin" data-goto="signin">Open Sign in</a></p>`).join("");
+  result.innerHTML = `${single}${zip}<ul class="files">${mode === "link" ? `<li><span class="name">${esc(job.files[0])}</span></li>` : items}</ul>${warn}${notes}`;
 }
 </script>
 </body>
